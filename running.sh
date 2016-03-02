@@ -31,7 +31,7 @@ do
 	std_temp=$(basename "$std_path")
   std_name=$(echo $std_temp | tr "()" "\n" | sed -n 2p)
   
-	#echo $std_name >&2
+	echo $std_name >&2
   #echo $std_path
  
 	cd "$std_path"
@@ -59,7 +59,8 @@ do
 
 	#if [ $std_bash_status = 0 ] && [ $std_code_status = 0 ]; then
 
-	std_score=$($PYTHON $GRADER $INPUT_PATH $CODE_OUT $BASH_OUT)
+	#std_score=$($PYTHON $GRADER $INPUT_PATH $CODE_OUT $BASH_OUT)
+	std_score=0
 
   echo $std_name, $std_has_bash, $std_score
 	cd ..
