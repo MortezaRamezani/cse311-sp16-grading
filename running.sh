@@ -1,29 +1,67 @@
 #!/bin/bash
 
-CODE_PATH=$1
-INPUT_FILE1="../../scripts/input1"
-OUTPUT_NAME="output.txt"
-TIMEF_NAME="time.txt"
+CODES_FOLDER=$1
+INPUT_NAME=$(basename $2)
+INPUT_PATH=$(readlink -e $2)
 
-for std_path in ${CODE_PATH}/*/
+OUTPUT_NAME="output"
+TIMEF_NAME="time"
+
+PYTHON=python-2.7.10
+GRADER=$(pwd)"/grader.py"
+
+
+BASH_OUT=$INPUT_NAME"_bash.out"
+BASH_TIME=$INPUT_NAME"_bash.time"
+BASH_ERR=$INPUT_NAME"_bash.err"
+CODE_OUT=$INPUT_NAME"_code.out"
+CODE_TIME=$INPUT_NAME"_code.time"
+CODE_ERR=$INPUT_NAME"_code.err"
+
+
+for std_path in ${CODES_FOLDER}/*/
 do
-  std_temp=$(basename "$std_path")
+  std_has_make=false                                                                                                  
+	std_has_bash=false
+	std_has_readme=false
+	std_bash_status=0
+	std_code_status=0
+	std_score=0
+
+	std_temp=$(basename "$std_path")
   std_name=$(echo $std_temp | tr "()" "\n" | sed -n 2p)
-  echo $std_name >&2
+  
+	#echo $std_name >&2
   #echo $std_path
-  cd "$std_path"
-  make > /dev/null 2>&1
+ 
+	cd "$std_path"
+  
+	if [ -f "wordc.sh" ]; then
+		std_has_bash=true
+		chmod +x wordc.sh
+		./wordc.sh $INPUT_PATH $BASH_OUT $BASH_TIME > $BASH_ERR 2>&1
+		ret_val=$?
+		if [ $ret_val != 0 ]; then
+			std_bash_status=-1
+		fi
+	fi
+
+	make > /dev/null 2>&1
   ret_val=$?
   if [ $ret_val != 0 ]; then
-    echo "ERROR"
+    std_code_status=-1
   else
-    echo "OK"
-    ./wordc $INPUT_FILE1 $OUTPUT_NAME $TIMEF_NAME
-    ./wordc.sh $INPUT_FILE1 $OUTPUT_NAME_SH $TIMEF_NAME_SH
-    python $GRADER
-    head -n 5 $OUTPUT_NAME
-    cat $TIMEF_NAME
+    ./wordc $INPUT_PATH $CODE_OUT $CODE_TIME > $CODE_ERR 2>&1
+		if [ $ret_val != 0 ]; then
+			std_code_status=-1
+		fi
   fi
-  echo '----------------------------------------'
-  cd ..
+
+	#if [ $std_bash_status = 0 ] && [ $std_code_status = 0 ]; then
+
+	std_score=$($PYTHON $GRADER $INPUT_PATH $CODE_OUT $BASH_OUT)
+
+  echo $std_name, $std_has_bash, $std_score
+	cd ..
+
 done
